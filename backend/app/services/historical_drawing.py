@@ -18,7 +18,11 @@ class HistoricalDrawingService(BaseModuleService):
     NEGATIVE_ACTIONS = []
 
     def cross_module_verify(
-        self, entry_id: int, action: str, entry: dict[str, Any]
+        self,
+        entry_id: int,
+        action: str,
+        entry: dict[str, Any],
+        context: dict[str, Any] | None = None,
     ) -> tuple[bool, str]:
         if action == "数字化处理":
             if entry.get("保存状况", "") in ("严重破损", "无法展开"):
@@ -33,7 +37,11 @@ class HistoricalDrawingService(BaseModuleService):
         return True, ""
 
     def cross_module_effect(
-        self, entry_id: int, action: str, entry: dict[str, Any]
+        self,
+        entry_id: int,
+        action: str,
+        entry: dict[str, Any],
+        context: dict[str, Any] | None = None,
     ) -> list[dict]:
         effects = []
         if action == "执行归档":

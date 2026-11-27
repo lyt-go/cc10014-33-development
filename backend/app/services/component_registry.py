@@ -18,7 +18,11 @@ class ComponentRegistryService(BaseModuleService):
     NEGATIVE_ACTIONS = []
 
     def cross_module_verify(
-        self, entry_id: int, action: str, entry: dict[str, Any]
+        self,
+        entry_id: int,
+        action: str,
+        entry: dict[str, Any],
+        context: dict[str, Any] | None = None,
     ) -> tuple[bool, str]:
         if action == "提交鉴定":
             # 检查构件的所属建筑是否已有勘查记录
@@ -41,7 +45,11 @@ class ComponentRegistryService(BaseModuleService):
         return True, ""
 
     def cross_module_effect(
-        self, entry_id: int, action: str, entry: dict[str, Any]
+        self,
+        entry_id: int,
+        action: str,
+        entry: dict[str, Any],
+        context: dict[str, Any] | None = None,
     ) -> list[dict]:
         effects = []
         if action == "标记修复":

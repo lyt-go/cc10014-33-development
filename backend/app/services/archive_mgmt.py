@@ -18,7 +18,11 @@ class ArchiveMgmtService(BaseModuleService):
     NEGATIVE_ACTIONS = []
 
     def cross_module_verify(
-        self, entry_id: int, action: str, entry: dict[str, Any]
+        self,
+        entry_id: int,
+        action: str,
+        entry: dict[str, Any],
+        context: dict[str, Any] | None = None,
     ) -> tuple[bool, str]:
         if action == "归档入库":
             # 入库前确认关联工序是否全部完成
@@ -33,7 +37,11 @@ class ArchiveMgmtService(BaseModuleService):
         return True, ""
 
     def cross_module_effect(
-        self, entry_id: int, action: str, entry: dict[str, Any]
+        self,
+        entry_id: int,
+        action: str,
+        entry: dict[str, Any],
+        context: dict[str, Any] | None = None,
     ) -> list[dict]:
         effects = []
         if action == "归档入库":

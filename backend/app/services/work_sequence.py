@@ -11,14 +11,18 @@ class WorkSequenceService(BaseModuleService):
     MODULE = "work_sequence"
     ENTITY = "工序卡"
     OPERATION_TERM = "发布工序"
-    LIST_FIELDS = ["工序名称", "前置工序", "所需工匠", "施工区域", "预计工时", "编排人", "工序状态", "备注说明"]
+    LIST_FIELDS = ["工序名称", "前置工序", "所需工匠", "施工区域", "工程范围", "预计工时", "编排人", "工序状态", "备注说明"]
     REQUIRED_FIELDS = ["工序名称", "前置工序", "所需工匠"]
     STATUS_ORDER = ["待排期", "已发布", "施工中", "已完成"]
     ACTION_RULES = {"发布工序": "已发布", "开始施工": "施工中", "完成工序": "已完成"}
     NEGATIVE_ACTIONS = []
 
     def cross_module_verify(
-        self, entry_id: int, action: str, entry: dict[str, Any]
+        self,
+        entry_id: int,
+        action: str,
+        entry: dict[str, Any],
+        context: dict[str, Any] | None = None,
     ) -> tuple[bool, str]:
         if action == "发布工序":
             # 1. 检查前置工序是否已完成
@@ -56,7 +60,11 @@ class WorkSequenceService(BaseModuleService):
         return True, ""
 
     def cross_module_effect(
-        self, entry_id: int, action: str, entry: dict[str, Any]
+        self,
+        entry_id: int,
+        action: str,
+        entry: dict[str, Any],
+        context: dict[str, Any] | None = None,
     ) -> list[dict]:
         effects = []
         if action == "完成工序":

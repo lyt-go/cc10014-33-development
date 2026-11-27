@@ -18,7 +18,11 @@ class FundingUseService(BaseModuleService):
     NEGATIVE_ACTIONS = ["驳回支出"]
 
     def cross_module_verify(
-        self, entry_id: int, action: str, entry: dict[str, Any]
+        self,
+        entry_id: int,
+        action: str,
+        entry: dict[str, Any],
+        context: dict[str, Any] | None = None,
     ) -> tuple[bool, str]:
         if action == "核准支出":
             actual = float(entry.get("实际金额", 0))
@@ -42,7 +46,11 @@ class FundingUseService(BaseModuleService):
         return True, ""
 
     def cross_module_effect(
-        self, entry_id: int, action: str, entry: dict[str, Any]
+        self,
+        entry_id: int,
+        action: str,
+        entry: dict[str, Any],
+        context: dict[str, Any] | None = None,
     ) -> list[dict]:
         effects = []
         if action == "核准支出":

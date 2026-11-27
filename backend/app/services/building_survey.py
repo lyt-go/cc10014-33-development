@@ -18,7 +18,11 @@ class BuildingSurveyService(BaseModuleService):
     NEGATIVE_ACTIONS = []
 
     def cross_module_verify(
-        self, entry_id: int, action: str, entry: dict[str, Any]
+        self,
+        entry_id: int,
+        action: str,
+        entry: dict[str, Any],
+        context: dict[str, Any] | None = None,
     ) -> tuple[bool, str]:
         # 退回勘查时检查是否有关联的已通过方案，若有则阻止退回
         if action == "退回勘查":

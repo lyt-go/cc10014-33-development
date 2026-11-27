@@ -18,7 +18,11 @@ class RestorationPlanService(BaseModuleService):
     NEGATIVE_ACTIONS = ["驳回方案"]
 
     def cross_module_verify(
-        self, entry_id: int, action: str, entry: dict[str, Any]
+        self,
+        entry_id: int,
+        action: str,
+        entry: dict[str, Any],
+        context: dict[str, Any] | None = None,
     ) -> tuple[bool, str]:
         if action == "提交审核":
             # 关联勘查必须是"已提交"或"已复核"
@@ -35,7 +39,11 @@ class RestorationPlanService(BaseModuleService):
         return True, ""
 
     def cross_module_effect(
-        self, entry_id: int, action: str, entry: dict[str, Any]
+        self,
+        entry_id: int,
+        action: str,
+        entry: dict[str, Any],
+        context: dict[str, Any] | None = None,
     ) -> list[dict]:
         effects = []
         if action == "审核通过":

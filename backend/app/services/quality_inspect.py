@@ -18,7 +18,11 @@ class QualityInspectService(BaseModuleService):
     NEGATIVE_ACTIONS = []
 
     def cross_module_verify(
-        self, entry_id: int, action: str, entry: dict[str, Any]
+        self,
+        entry_id: int,
+        action: str,
+        entry: dict[str, Any],
+        context: dict[str, Any] | None = None,
     ) -> tuple[bool, str]:
         if action == "出具报告":
             # 出具报告前检查关联工序是否完成
@@ -35,12 +39,21 @@ class QualityInspectService(BaseModuleService):
         return True, ""
 
     def cross_module_effect(
-        self, entry_id: int, action: str, entry: dict[str, Any]
+        self,
+        entry_id: int,
+        action: str,
+        entry: dict[str, Any],
+        context: dict[str, Any] | None = None,
     ) -> list[dict]:
         effects = []
         if action == "出具报告":
             process = entry.get("检查工序", "")
-            # 1. 自动创建验收记录
+            # 1. 自动创建验收记录（继承工序的工程范围，便于竣工报告按范围核对证据）
+            ws_scope = ""
+            for ws_row in store.rows("work_sequence"):
+                if ws_row.get("工序名称", "") == process:
+                    ws_scope = str(ws_row.get("工程范围") or "")
+                    break
             acc_rows = store.rows("acceptance_record")
             new_acc = {
                 "id": max((int(r.get("id", 0)) for r in acc_rows), default=0) + 1,
@@ -51,6 +64,7 @@ class QualityInspectService(BaseModuleService):
                 "整改期限": "",
                 "验收人": "系统自动",
                 "验收日期": entry.get("检查日期", ""),
+                "工程范围": ws_scope,
                 "备注说明": f"由质量检查#{entry_id}触发创建",
                 "status": "待验收",
                 "pending": True,

@@ -40,7 +40,7 @@
     <table class="data-table">
       <thead>
         <tr>
-          <th v-for="column in meta.fields" :key="column">{{ column }}</th>
+          <th v-for="column in columns" :key="column">{{ column }}</th>
           <th>当前状态</th>
           <th>可执行动作</th>
         </tr>
@@ -52,7 +52,7 @@
           :data-testid="`row-${row.id}`"
           :data-status="String(row.status)"
         >
-          <td v-for="column in meta.fields" :key="column">{{ row[column] ?? '—' }}</td>
+          <td v-for="column in columns" :key="column">{{ row[column] ?? '—' }}</td>
           <td>{{ row.status }}</td>
           <td class="row-actions">
             <button
@@ -68,7 +68,7 @@
           </td>
         </tr>
         <tr v-if="!rows.length">
-          <td :colspan="meta.fields.length + 2" class="empty-state">
+          <td :colspan="columns.length + 2" class="empty-state">
             暂无{{ meta.name }}数据，可先登记{{ meta.entity }}
           </td>
         </tr>
@@ -86,6 +86,27 @@
           <button class="btn" type="button" @click="showCreate = false">取消</button>
           <button class="btn primary" data-testid="submit-create" type="submit" :disabled="creating">
             {{ creating ? '提交中…' : '确认登记' }}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div v-if="promptAction" class="modal-backdrop" data-testid="action-prompt-modal">
+      <form class="modal" @submit.prevent="submitPrompt">
+        <h3>{{ promptAction.action }}——{{ meta.entity }}#{{ promptAction.row.id }}</h3>
+        <label v-for="field in promptFields" :key="field.key" class="create-field">
+          <span>{{ field.label }}</span>
+          <input
+            v-model="promptValues[field.key]"
+            :data-testid="`prompt-${field.key}`"
+            :placeholder="`请输入${field.label}`"
+            required
+          />
+        </label>
+        <div class="page-actions">
+          <button class="btn" type="button" @click="promptAction = null">取消</button>
+          <button class="btn primary" data-testid="submit-action-prompt" type="submit" :disabled="acting">
+            {{ acting ? '提交中…' : `确认${promptAction.action}` }}
           </button>
         </div>
       </form>
@@ -119,6 +140,15 @@ const filterFields = meta.fields.slice(0, 3)
 const showCreate = ref(false)
 const creating = ref(false)
 const createValues = ref<Record<string, string>>({})
+const promptAction = ref<{ action: string; row: EntryRow } | null>(null)
+const promptValues = ref<Record<string, string>>({})
+const acting = ref(false)
+
+// 表格列 = 登记字段 + 只读回写字段（如免验原因、证据说明、待审核清单）
+const columns = [...meta.fields, ...(meta.readonlyFields ?? [])]
+const promptFields = computed(() =>
+  promptAction.value ? (meta.actionPrompts?.[promptAction.value.action] ?? []) : [],
+)
 
 const stats = computed(() => [
   { label: meta.metrics[0], value: total.value },
@@ -154,13 +184,42 @@ async function submitCreate() {
   finally { creating.value = false }
 }
 
-async function runAction(action: string, row: EntryRow) {
+function runAction(action: string, row: EntryRow) {
+  const prompts = meta.actionPrompts?.[action]
+  if (prompts?.length) {
+    // 需要附加输入的动作（如确认免验需验收人与免验原因）：先弹窗采集
+    promptAction.value = { action, row }
+    promptValues.value = Object.fromEntries(prompts.map((p) => [p.key, '']))
+    errorMessage.value = ''
+    return
+  }
+  void executeAction(action, row, {})
+}
+
+async function submitPrompt() {
+  if (!promptAction.value) return
+  const { action, row } = promptAction.value
+  const extras = {
+    operator: promptValues.value.operator?.trim() || undefined,
+    reason: promptValues.value.reason?.trim() || undefined,
+  }
+  await executeAction(action, row, extras)
+  promptAction.value = null
+}
+
+async function executeAction(
+  action: string,
+  row: EntryRow,
+  extras: { operator?: string; reason?: string },
+) {
+  acting.value = true
   errorMessage.value = ''
   try {
-    const r = await applyAction(meta.key, Number(row.id), action)
+    const r = await applyAction(meta.key, Number(row.id), action, extras)
     if (!r.ok) throw new Error(r.message)
     await reload()
   } catch (e) { errorMessage.value = e instanceof Error ? e.message : '操作失败' }
+  finally { acting.value = false }
 }
 
 async function reload() {

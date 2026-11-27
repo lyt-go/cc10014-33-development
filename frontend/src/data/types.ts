@@ -18,6 +18,10 @@ export type ModuleMeta = {
   actions: string[]
   actionTargets: Record<string, string>
   metrics: string[]
+  /** 只读列：表格展示但不出现在登记表单（由动作/联动回写） */
+  readonlyFields?: string[]
+  /** 动作附加输入：执行前弹出对话框采集，随动作请求一并提交 */
+  actionPrompts?: Record<string, { key: 'operator' | 'reason'; label: string }[]>
 }
 
 export type PageResult = {
@@ -30,6 +34,7 @@ export type PageResult = {
 export type ActionResult = {
   ok: boolean
   message: string
+  entry?: EntryRow | null
 }
 
 export type OverviewResult = {

@@ -21,13 +21,21 @@ class BaseModuleService:
 
     # ── 跨模块业务扩展点（子类可覆盖） ──
     def cross_module_verify(
-        self, entry_id: int, action: str, entry: dict[str, Any]
+        self,
+        entry_id: int,
+        action: str,
+        entry: dict[str, Any],
+        context: dict[str, Any] | None = None,
     ) -> tuple[bool, str]:
         """执行动作前的跨模块校验。返回 (通过, 失败原因)。"""
         return True, ""
 
     def cross_module_effect(
-        self, entry_id: int, action: str, entry: dict[str, Any]
+        self,
+        entry_id: int,
+        action: str,
+        entry: dict[str, Any],
+        context: dict[str, Any] | None = None,
     ) -> list[dict]:
         """动作执行后的跨模块副作用。返回受影响的联动条目列表。"""
         return []
@@ -77,8 +85,18 @@ class BaseModuleService:
         rows.append(entry)
         return entry, []
 
-    def run_action(self, entry_id: int, action: str) -> tuple[dict[str, Any] | None, str]:
-        """执行动作：幂等检查 -> 前置校验 -> 状态变更 -> 跨模块联动。"""
+    def run_action(
+        self,
+        entry_id: int,
+        action: str,
+        context: dict[str, Any] | None = None,
+    ) -> tuple[dict[str, Any] | None, str]:
+        """执行动作：幂等检查 -> 前置校验 -> 状态变更 -> 跨模块联动。
+
+        context 携带动作上下文（如操作人 operator、原因 reason），
+        供需要权限或留痕的跨模块校验使用。
+        """
+        ctx = context or {}
         # 幂等检查
         if store.check_idempotent(self.MODULE, entry_id, action):
             entry = store.find(self.MODULE, entry_id)
@@ -95,7 +113,7 @@ class BaseModuleService:
             return None, f"动作「{action}」不属于{self.MODULE}可执行范围"
 
         # 跨模块前置校验
-        passed, reason = self.cross_module_verify(entry_id, action, entry)
+        passed, reason = self.cross_module_verify(entry_id, action, entry, ctx)
         if not passed:
             return None, reason
 
@@ -110,7 +128,7 @@ class BaseModuleService:
             entry["abnormal"] = action in self.NEGATIVE_ACTIONS
 
             # 执行跨模块副作用
-            self.cross_module_effect(entry_id, action, entry)
+            self.cross_module_effect(entry_id, action, entry, ctx)
 
             # 标记幂等
             store.mark_idempotent(self.MODULE, entry_id, action)

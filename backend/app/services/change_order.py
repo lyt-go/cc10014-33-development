@@ -18,7 +18,11 @@ class ChangeOrderService(BaseModuleService):
     NEGATIVE_ACTIONS = ["驳回变更"]
 
     def cross_module_verify(
-        self, entry_id: int, action: str, entry: dict[str, Any]
+        self,
+        entry_id: int,
+        action: str,
+        entry: dict[str, Any],
+        context: dict[str, Any] | None = None,
     ) -> tuple[bool, str]:
         if action == "签认变更":
             process = entry.get("影响工序", "")
@@ -45,7 +49,11 @@ class ChangeOrderService(BaseModuleService):
         return True, ""
 
     def cross_module_effect(
-        self, entry_id: int, action: str, entry: dict[str, Any]
+        self,
+        entry_id: int,
+        action: str,
+        entry: dict[str, Any],
+        context: dict[str, Any] | None = None,
     ) -> list[dict]:
         effects = []
         if action == "签认变更":

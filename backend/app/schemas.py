@@ -29,3 +29,5 @@ class EntryPayload(BaseModel):
 class ActionPayload(BaseModel):
     action: str
     remark: str | None = None
+    operator: str | None = None
+    reason: str | None = None
